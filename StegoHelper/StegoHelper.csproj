@@ -6,8 +6,23 @@
     <Nullable>enable</Nullable>
     <Authors>hardrive9000</Authors>
     <Company>hardrive9000</Company>
-    <PackageProjectUrl></PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/hardrive9000/StegoHelper</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/hardrive9000/StegoHelper</RepositoryUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>steganography;cryptography;cipher;hide text;hide message;hacking;image hiding;image cryptography;image steganography;stegohelper;simple steganography;lsb steganography;simple lsb steganography</PackageTags>
+    <Description>Simple helper to hide text into an image using LSB steganography. It also supports AES-256 encryption to enforce security of hidden text.</Description>
+    <PackageIcon>icon.png</PackageIcon>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="SixLabors.ImageSharp" Version="2.1.3" />
