@@ -1,9 +1,4 @@
-## Summary
-Simple helper to hide text into an image using LSB steganography. It also supports AES-256 encryption to enforce security of hidden text.
-
-## Example
-```csharp
-using Cocona;
+﻿using Cocona;
 using StegoHelper;
 
 namespace SteganoConsole
@@ -54,7 +49,3 @@ namespace SteganoConsole
         }
     }
 }
-
-```
-## Videotutorial - C# Steganography Step by Step (Spanish)
-[![](https://img.youtube.com/vi/-mU5D37Istw/0.jpg)](https://www.youtube.com/watch?v=-mU5D37Istw)

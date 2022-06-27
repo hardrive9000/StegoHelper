@@ -1,7 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+	<Version>1.0.1</Version>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Authors>hardrive9000</Authors>
@@ -11,7 +12,7 @@
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>steganography;cryptography;cipher;hide text;hide message;hacking;image hiding;image cryptography;image steganography;stegohelper;simple steganography;lsb steganography;simple lsb steganography</PackageTags>
+    <PackageTags>steganography cryptography hacking stegohelper lsb hiding encryption image text stegano stego</PackageTags>
     <Description>Simple helper to hide text into an image using LSB steganography. It also supports AES-256 encryption to enforce security of hidden text.</Description>
     <PackageIcon>icon.png</PackageIcon>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>

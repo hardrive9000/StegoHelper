@@ -3,6 +3,23 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace StegoHelper
 {
+    public class InsufficientPixelsException : Exception
+    {
+        public InsufficientPixelsException()
+        {
+        }
+
+        public InsufficientPixelsException(string message)
+            : base(message)
+        {
+        }
+
+        public InsufficientPixelsException(string message, Exception inner)
+            : base(message, inner)
+        {
+        }
+    }
+
     public static class SteganographyHelper
     {
         private enum State
@@ -15,9 +32,10 @@ namespace StegoHelper
         /// Embed text (clear or encrypted) into an image.
         /// </summary>
         /// <param name="text">Clear or encrypted text to embed.</param>
-        /// <param name="bmp">Image in which the text should be embedded.</param>
+        /// <param name="inputImage">Image path in which the text should be embedded.</param>
+        /// <param name="outputImage">Path in which the resulting image should be saved.</param>
         /// <returns>Returns an image with embedded text.</returns>
-        public static Image EmbedText(string text, Image<Rgba32> bmp)
+        public static void EmbedText(string text, string inputImage, string outputImage)
         {
             // initially, we'll be hiding characters in the image
             State state = State.Hiding;
@@ -38,117 +56,127 @@ namespace StegoHelper
             byte R, G, B;
 
             // pass through the rows
-            for (int i = 0; i < bmp.Height; i++)
+            using (Image < Rgba32 > bmp = Image.Load<Rgba32>(inputImage))
             {
-                // pass through each row
-                for (int j = 0; j < bmp.Width; j++)
+                if (bmp.Height * bmp.Width * 3 / 8 >= text.Length + 1)
                 {
-                    // holds the pixel that is currently being processed
-                    Rgba32 pixel = bmp[j, i];
-
-                    // now, clear the least significant bit (LSB) from each pixel element
-                    R = (byte)(pixel.R - pixel.R % 2);
-                    G = (byte)(pixel.G - pixel.G % 2);
-                    B = (byte)(pixel.B - pixel.B % 2);
-
-                    // for each pixel, pass through its elements (RGB)
-                    for (int n = 0; n < 3; n++)
+                    for (int i = 0; i < bmp.Height; i++)
                     {
-                        // check if new 8 bits has been processed
-                        if (pixelElementIndex % 8 == 0)
+                        // pass through each row
+                        for (int j = 0; j < bmp.Width; j++)
                         {
-                            // check if the whole process has finished
-                            // we can say that it's finished when 8 zeros are added
-                            if (state == State.FillingWithZeros && zeros == 8)
+                            // holds the pixel that is currently being processed
+                            Rgba32 pixel = bmp[j, i];
+
+                            // now, clear the least significant bit (LSB) from each pixel element
+                            R = (byte)(pixel.R - pixel.R % 2);
+                            G = (byte)(pixel.G - pixel.G % 2);
+                            B = (byte)(pixel.B - pixel.B % 2);
+
+                            // for each pixel, pass through its elements (RGB)
+                            for (int n = 0; n < 3; n++)
                             {
-                                // apply the last pixel on the image
-                                // even if only a part of its elements have been affected
-                                if ((pixelElementIndex - 1) % 3 < 2)
+                                // check if new 8 bits has been processed
+                                if (pixelElementIndex % 8 == 0)
                                 {
-                                    bmp[j, i] = Color.FromRgba(R, G, B, 255);
-                                }
-
-                                // return the bitmap with the text hidden in
-                                return bmp;
-                            }
-
-                            // check if all characters has been hidden
-                            if (charIndex >= text.Length)
-                            {
-                                // start adding zeros to mark the end of the text
-                                state = State.FillingWithZeros;
-                            }
-                            else
-                            {
-                                // move to the next character and process again
-                                charValue = text[charIndex++];
-                            }
-                        }
-
-                        // check which pixel element has the turn to hide a bit in its LSB
-                        switch (pixelElementIndex % 3)
-                        {
-                            case 0:
-                                {
-                                    if (state == State.Hiding)
+                                    // check if the whole process has finished
+                                    // we can say that it's finished when 8 zeros are added
+                                    if (state == State.FillingWithZeros && zeros == 8)
                                     {
-                                        // the rightmost bit in the character will be (charValue % 2)
-                                        // to put this value instead of the LSB of the pixel element
-                                        // just add it to it
-                                        // recall that the LSB of the pixel element had been cleared
-                                        // before this operation
-                                        R = (byte)(R + charValue % 2);
+                                        // apply the last pixel on the image
+                                        // even if only a part of its elements have been affected
+                                        if ((pixelElementIndex - 1) % 3 < 2)
+                                        {
+                                            bmp[j, i] = Color.FromRgba(R, G, B, 255);
+                                        }
 
-                                        // removes the added rightmost bit of the character
-                                        // such that next time we can reach the next one
-                                        charValue /= 2;
-                                    }
-                                }
-                                break;
-                            case 1:
-                                {
-                                    if (state == State.Hiding)
-                                    {
-                                        G = (byte)(G + charValue % 2);
+                                        // save the bitmap with the text hidden in
+                                        bmp.SaveAsPng(outputImage);
 
-                                        charValue /= 2;
-                                    }
-                                }
-                                break;
-                            case 2:
-                                {
-                                    if (state == State.Hiding)
-                                    {
-                                        B = (byte)(B + charValue % 2);
-
-                                        charValue /= 2;
+                                        return;
                                     }
 
-                                    bmp[j, i] = Color.FromRgba(R, G, B, 255);
+                                    // check if all characters has been hidden
+                                    if (charIndex >= text.Length)
+                                    {
+                                        // start adding zeros to mark the end of the text
+                                        state = State.FillingWithZeros;
+                                    }
+                                    else
+                                    {
+                                        // move to the next character and process again
+                                        charValue = text[charIndex++];
+                                    }
                                 }
-                                break;
-                        }
 
-                        pixelElementIndex++;
+                                // check which pixel element has the turn to hide a bit in its LSB
+                                switch (pixelElementIndex % 3)
+                                {
+                                    case 0:
+                                        {
+                                            if (state == State.Hiding)
+                                            {
+                                                // the rightmost bit in the character will be (charValue % 2)
+                                                // to put this value instead of the LSB of the pixel element
+                                                // just add it to it
+                                                // recall that the LSB of the pixel element had been cleared
+                                                // before this operation
+                                                R = (byte)(R + charValue % 2);
 
-                        if (state == State.FillingWithZeros)
-                        {
-                            // increment the value of zeros until it is 8
-                            zeros++;
+                                                // removes the added rightmost bit of the character
+                                                // such that next time we can reach the next one
+                                                charValue /= 2;
+                                            }
+                                        }
+                                        break;
+                                    case 1:
+                                        {
+                                            if (state == State.Hiding)
+                                            {
+                                                G = (byte)(G + charValue % 2);
+
+                                                charValue /= 2;
+                                            }
+                                        }
+                                        break;
+                                    case 2:
+                                        {
+                                            if (state == State.Hiding)
+                                            {
+                                                B = (byte)(B + charValue % 2);
+
+                                                charValue /= 2;
+                                            }
+
+                                            bmp[j, i] = Color.FromRgba(R, G, B, 255);
+                                        }
+                                        break;
+                                }
+
+                                pixelElementIndex++;
+
+                                if (state == State.FillingWithZeros)
+                                {
+                                    // increment the value of zeros until it is 8
+                                    zeros++;
+                                }
+                            }
                         }
                     }
                 }
+                else
+                {
+                    throw new InsufficientPixelsException("Insufficient pixels to hide text");
+                }
             }
-
-            return bmp;
         }
 
         /// <summary>
         /// Extracts text (clear or encrypted) from an image.
         /// </summary>
-        /// <param name="bmp">Image in which the text is embedded.</param>
+        /// <param name="inputImage">Image path in which the text is embedded.</param>
         /// <returns>Returns clear or encrypted text from an image.</returns>
-        public static string ExtractText(Image<Rgba32> bmp)
+        public static string ExtractText(string inputImage)
         {
             int colorUnitIndex = 0;
             int charValue = 0;
@@ -157,59 +185,62 @@ namespace StegoHelper
             string extractedText = string.Empty;
 
             // pass through the rows
-            for (int i = 0; i < bmp.Height; i++)
+            using (Image<Rgba32> bmp = Image.Load<Rgba32>(inputImage))
             {
-                // pass through each row
-                for (int j = 0; j < bmp.Width; j++)
+                for (int i = 0; i < bmp.Height; i++)
                 {
-                    Rgba32 pixel = bmp[j, i];
-
-                    // for each pixel, pass through its elements (RGB)
-                    for (int n = 0; n < 3; n++)
+                    // pass through each row
+                    for (int j = 0; j < bmp.Width; j++)
                     {
-                        switch (colorUnitIndex % 3)
+                        Rgba32 pixel = bmp[j, i];
+
+                        // for each pixel, pass through its elements (RGB)
+                        for (int n = 0; n < 3; n++)
                         {
-                            case 0:
-                                {
-                                    // get the LSB from the pixel element (will be pixel.R % 2)
-                                    // then add one bit to the right of the current character
-                                    // this can be done by (charValue = charValue * 2)
-                                    // replace the added bit (which value is by default 0) with
-                                    // the LSB of the pixel element, simply by addition
-                                    charValue = charValue * 2 + pixel.R % 2;
-                                }
-                                break;
-                            case 1:
-                                {
-                                    charValue = charValue * 2 + pixel.G % 2;
-                                }
-                                break;
-                            case 2:
-                                {
-                                    charValue = charValue * 2 + pixel.B % 2;
-                                }
-                                break;
-                        }
-
-                        colorUnitIndex++;
-
-                        // if 8 bits has been added, then add the current character to the result text
-                        if (colorUnitIndex % 8 == 0)
-                        {
-                            // reverse? of course, since each time the process happens on the right (for simplicity)
-                            charValue = ReverseBits(charValue);
-
-                            // can only be 0 if it is the stop character (the 8 zeros)
-                            if (charValue == 0)
+                            switch (colorUnitIndex % 3)
                             {
-                                return extractedText;
+                                case 0:
+                                    {
+                                        // get the LSB from the pixel element (will be pixel.R % 2)
+                                        // then add one bit to the right of the current character
+                                        // this can be done by (charValue = charValue * 2)
+                                        // replace the added bit (which value is by default 0) with
+                                        // the LSB of the pixel element, simply by addition
+                                        charValue = charValue * 2 + pixel.R % 2;
+                                    }
+                                    break;
+                                case 1:
+                                    {
+                                        charValue = charValue * 2 + pixel.G % 2;
+                                    }
+                                    break;
+                                case 2:
+                                    {
+                                        charValue = charValue * 2 + pixel.B % 2;
+                                    }
+                                    break;
                             }
 
-                            // convert the character value from int to char
-                            char c = (char)charValue;
+                            colorUnitIndex++;
 
-                            // add the current character to the result text
-                            extractedText += c.ToString();
+                            // if 8 bits has been added, then add the current character to the result text
+                            if (colorUnitIndex % 8 == 0)
+                            {
+                                // reverse? of course, since each time the process happens on the right (for simplicity)
+                                charValue = ReverseBits(charValue);
+
+                                // can only be 0 if it is the stop character (the 8 zeros)
+                                if (charValue == 0)
+                                {
+                                    return extractedText;
+                                }
+
+                                // convert the character value from int to char
+                                char c = (char)charValue;
+
+                                // add the current character to the result text
+                                extractedText += c.ToString();
+                            }
                         }
                     }
                 }
