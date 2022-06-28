@@ -26,14 +26,8 @@ namespace SteganoConsole
                     if (!string.IsNullOrEmpty(password))
                         text = AESEncryptionHelper.Encrypt(text, password);
 
-                    try
-                    {
-                        SteganographyHelper.EmbedText(text, inputImage, outputImage);
-                    }
-                    catch (InsufficientPixelsException ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
+                    if (!SteganographyHelper.EmbedText(text, inputImage, outputImage))
+                        Console.WriteLine("Insufficient pixels to hide text");
                 }
             }
         }
@@ -54,7 +48,6 @@ namespace SteganoConsole
         }
     }
 }
-
 ```
 ## Videotutorial - C# Steganography Step by Step (Spanish)
 [![](https://img.youtube.com/vi/-mU5D37Istw/0.jpg)](https://www.youtube.com/watch?v=-mU5D37Istw)

@@ -3,23 +3,6 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace StegoHelper
 {
-    public class InsufficientPixelsException : Exception
-    {
-        public InsufficientPixelsException()
-        {
-        }
-
-        public InsufficientPixelsException(string message)
-            : base(message)
-        {
-        }
-
-        public InsufficientPixelsException(string message, Exception inner)
-            : base(message, inner)
-        {
-        }
-    }
-
     public static class SteganographyHelper
     {
         private enum State
@@ -35,7 +18,7 @@ namespace StegoHelper
         /// <param name="inputImage">Image path in which the text should be embedded.</param>
         /// <param name="outputImage">Path in which the resulting image should be saved.</param>
         /// <returns>Returns an image with embedded text.</returns>
-        public static void EmbedText(string text, string inputImage, string outputImage)
+        public static bool EmbedText(string text, string inputImage, string outputImage)
         {
             // initially, we'll be hiding characters in the image
             State state = State.Hiding;
@@ -93,7 +76,7 @@ namespace StegoHelper
                                         // save the bitmap with the text hidden in
                                         bmp.SaveAsPng(outputImage);
 
-                                        return;
+                                        return true;
                                     }
 
                                     // check if all characters has been hidden
@@ -164,10 +147,8 @@ namespace StegoHelper
                         }
                     }
                 }
-                else
-                {
-                    throw new InsufficientPixelsException("Insufficient pixels to hide text");
-                }
+
+                return false;
             }
         }
 

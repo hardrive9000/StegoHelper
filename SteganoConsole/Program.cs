@@ -21,14 +21,8 @@ namespace SteganoConsole
                     if (!string.IsNullOrEmpty(password))
                         text = AESEncryptionHelper.Encrypt(text, password);
 
-                    try
-                    {
-                        SteganographyHelper.EmbedText(text, inputImage, outputImage);
-                    }
-                    catch (InsufficientPixelsException ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
+                    if (!SteganographyHelper.EmbedText(text, inputImage, outputImage))
+                        Console.WriteLine("Insufficient pixels to hide text");
                 }
             }
         }
